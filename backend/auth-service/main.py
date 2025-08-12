@@ -6,6 +6,10 @@ from datetime import datetime, timedelta
 
 app = FastAPI(title="Auth Service", port=8001)
 
+app = FastAPI(title="Auth Service", port=8001)
+
+app = FastAPI(title="Auth Service", port=8001)
+
 
 SECRET_KEY = "auth-super-secret"
 ALGORITHM = "HS256"
@@ -34,4 +38,5 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
         raise HTTPException(status_code=401, detail="Invalid credentials")
     
     token = create_jwt_token({"sub": form_data.username})
+
     return {"access_token": token, "token_type": "bearer"}

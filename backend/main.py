@@ -1,12 +1,12 @@
-import asyncio
 from contextlib import asynccontextmanager
+from fastapi import FastAPI  
+from fastapi.responses import JSONResponse  
 import sentry_sdk
-from sentry_sdk.integrations.fastapi import FastApiIntegration
-from sentry_sdk.integrations.redis import RedisIntegration
+from backend.core.cache import redis_client
+from backend.services.search_service import es
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Запуск
     print("🚀 Service started")
     yield
     # Остановка
@@ -15,16 +15,6 @@ async def lifespan(app: FastAPI):
     print("🛑 Service stopped")
 
 app = FastAPI(lifespan=lifespan)
-
-sentry_sdk.init(
-    dsn="https://ваш-dsn@sentry.io/проект",
-    integrations=[
-        FastApiIntegration(),
-        RedisIntegration(),
-    ],
-    traces_sample_rate=1.0,
-    profiles_sample_rate=1.0,
-)
 
 @app.exception_handler(500)
 async def internal_exception_handler(request, exc):

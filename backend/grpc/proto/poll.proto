@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package poll;
+
+service PollService {
+  rpc GetPoll (PollRequest) returns (PollResponse);
+  rpc CreatePoll (CreatePollRequest) returns (CreatePollResponse);
+}
+
+message PollRequest {
+  string poll_id = 1;
+}
+
+message PollResponse {
+  string question = 1;
+  repeated string options = 2;
+}

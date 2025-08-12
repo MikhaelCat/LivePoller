@@ -5,6 +5,17 @@ import sentry_sdk
 from backend.core.cache import redis_client
 from backend.services.search_service import es
 
+from datetime import datetime, timedelta
+from passlib.context import CryptContext
+
+from fastapi import FastAPI, Depends, HTTPException
+from fastapi.security import OAuth2PasswordRequestForm
+
+import jwt
+
+
+app = FastAPI(title="Auth Service", port=8001)
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     print("🚀 Service started")
@@ -20,3 +31,4 @@ app = FastAPI(lifespan=lifespan)
 async def internal_exception_handler(request, exc):
     sentry_sdk.capture_exception(exc)
     return JSONResponse(status_code=500, content={"detail": "Internal error"})
+

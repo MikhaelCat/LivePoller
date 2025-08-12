@@ -1,5 +1,5 @@
 from celery import Celery
-from backend.core.email import send_email
+from backend.core.email import send_email  # заглушка
 
 celery = Celery(
     'tasks',

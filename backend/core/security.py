@@ -1,4 +1,3 @@
-# backend/core/security.py
 import jwt
 from datetime import datetime, timedelta
 
@@ -30,8 +29,8 @@ def get_password_hash(password: str) -> str:
 def create_access_token(data: dict) -> str:
     """
     Создаёт JWT-токен с временем жизни.
-    
-    Args:
+
+    Args:  # ← Пустая строка ПЕРЕД этой строкой теперь полностью пустая
         data (dict): Данные для включения в токен.
 
     Returns:
@@ -42,3 +41,4 @@ def create_access_token(data: dict) -> str:
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
+

@@ -1,5 +1,4 @@
 from pydantic_settings import BaseSettings
-from typing import Optional
 
 class Settings(BaseSettings):
     DATABASE_URL: str
@@ -10,8 +9,4 @@ class Settings(BaseSettings):
     class Config:
         env_file = ".env"
 
-try:
-    settings = Settings()
-except Exception as e:
-    print("⚠️  Не удалось загрузить настройки из .env:", e)
-    raise
+settings = Settings()

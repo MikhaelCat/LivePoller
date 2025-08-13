@@ -1,11 +1,1 @@
-touch backend/__init__.py
-touch backend/schemas/__init__.py
-touch backend/models/__init__.py
-touch backend/api/__init__.py
-touch backend/api/v1/__init__.py
-touch backend/services/__init__.py
-touch backend/database/__init__.py
-touch backend/core/__init__.py
-touch backend/workers/__init__.py
-touch backend/grpc/__init__.py
-touch backend/monitoring/__init__.py
+

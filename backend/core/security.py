@@ -16,13 +16,22 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 def get_password_hash(password: str) -> str:
     return pwd_context.hash(password)
 
-def create_access_token( dict) -> str:
+def create_access_token(data: dict) -> str:
+    """
+    Создаёт JWT-токен с временем жизни.
+
+    Args:
+        data (dict): Данные для включения в токен.
+
+    Returns:
+        str: Закодированный JWT токен.
+    """
     to_encode = data.copy()
     expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-    
-    # Проверяем тип и конвертируем, если нужно
+    # PyJWT >= 2.0.0 возвращает str, <= 1.7.1 возвращает bytes
     if isinstance(encoded_jwt, bytes):
         return encoded_jwt.decode("utf-8")
     return encoded_jwt
+

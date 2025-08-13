@@ -16,9 +16,13 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 def get_password_hash(password: str) -> str:
     return pwd_context.hash(password)
 
-def create_access_token(data: dict) -> str:
+def create_access_token( dict) -> str:
     to_encode = data.copy()
     expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-    return encoded_jwt  # Уже str в PyJWT 2.x
+    
+    # Проверяем тип и конвертируем, если нужно
+    if isinstance(encoded_jwt, bytes):
+        return encoded_jwt.decode("utf-8")
+    return encoded_jwt

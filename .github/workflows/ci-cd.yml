@@ -11,7 +11,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # 1. 🧹 Линтинг: ruff (включает isort + black) + mypy
+    # 1. 🧹 Линтинг и форматирование
   lint:
     runs-on: ubuntu-latest
     steps:
@@ -22,20 +22,22 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Install ruff
+      - name: Install linters
         run: |
           pip install ruff mypy
 
-      - name: Run linters
+      - name: Run linters (fix and check)
         run: |
-          # Автоисправление базовых проблем (I001, F401, W291 и т.д.)
+          # Исправляем базовые проблемы
           ruff check backend/ --fix
           ruff format backend/
 
           # Финальная проверка — если упадёт, значит, кто-то не запустил форматирование локально
           ruff check backend/
           ruff format backend/ --check
-          mypy backend/ --ignore-missing-imports
+          
+          # Проверка типов с mypy (убедись, что __init__.py созданы)
+          mypy backend/
 
   # 2. 🧪 Unit-тесты
   test-unit:

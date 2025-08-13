@@ -27,18 +27,8 @@ def get_password_hash(password: str) -> str:
 
 
 def create_access_token(data: dict) -> str:
-    """
-    Создаёт JWT-токен с временем жизни.
-
-    Args:  # ← Пустая строка ПЕРЕД этой строкой теперь полностью пустая
-        data (dict): Данные для включения в токен.
-
-    Returns:
-        str: Закодированный JWT токен.
-    """
     to_encode = data.copy()
     expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-    return encoded_jwt
-
+    return encoded_jwt.decode("utf-8")  

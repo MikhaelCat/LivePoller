@@ -7,17 +7,18 @@ pydantic-settings>=2.0.0
 
 # DB & Cache
 redis>=5.0.0
-aioredis>=2.0.0  
+aioredis>=2.0.0
 elasticsearch[async]>=8.0.0
 
 # Async Task Queue
 celery>=5.3.0
 amqp>=5.1.0
 
-# Security
+# Security & Auth
 python-jose[cryptography]>=3.3.0
 passlib[bcrypt]>=1.7.0
 python-oauth2>=1.1.0
+PyJWT>=2.8.0
 
 # gRPC
 protobuf>=4.0.0
@@ -39,5 +40,10 @@ httpx>=0.25.0
 playwright>=1.38.0
 pytest-cov>=4.0.0
 
-# Frontend build 
-nodejs>=18  
+# Type checking stubs 
+types-redis
+types-PyJWT
+types-passlib
+types-requests
+types-PyYAML 
+# types-elasticsearch # если есть, но часто не нужен

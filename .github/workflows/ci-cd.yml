@@ -2,16 +2,16 @@ name: 🚀 PollLive — Full CI/CD Pipeline
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [main, develop]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  # 1. 🧹 Линтинг и форматирование
+  # 1. 🧹 Линтинг: ruff (включает isort + black) + mypy
   lint:
     runs-on: ubuntu-latest
     steps:
@@ -22,18 +22,22 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Install linters
+      - name: Install ruff
         run: |
-          pip install ruff black isort mypy
+          pip install ruff mypy
 
       - name: Run linters
         run: |
-          ruff check backend/ --exit-zero
-          black --check backend/
-          isort --check-only backend/
+          # Автоисправление базовых проблем (I001, F401, W291 и т.д.)
+          ruff check backend/ --fix
+          ruff format backend/
+
+          # Финальная проверка — если упадёт, значит, кто-то не запустил форматирование локально
+          ruff check backend/
+          ruff format backend/ --check
           mypy backend/ --ignore-missing-imports
 
-  # 2. 🧪 Unit-тесты (с моками, без внешних сервисов)
+  # 2. 🧪 Unit-тесты
   test-unit:
     needs: lint
     runs-on: ubuntu-latest
@@ -61,7 +65,7 @@ jobs:
           file: ./backend/coverage.xml
           flags: unittests
 
-  # 3. 🧩 Integration-тесты (с БД, Redis, RabbitMQ)
+  # 3. 🧩 Integration-тесты (с PostgreSQL, Redis, RabbitMQ)
   test-integration:
     needs: test-unit
     runs-on: ubuntu-latest
@@ -110,40 +114,38 @@ jobs:
           cd backend
           pytest tests/integration/ -v --tb=short
 
-  # 4. 🌐 E2E тесты (Playwright + запуск сервисов)
+  # 4. 🌐 E2E тесты (Playwright)
   test-e2e:
     needs: test-integration
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Node.js (для фронтенда)
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
 
       - name: Install Python deps
         run: |
           pip install -r backend/requirements.txt
           cd backend && pip install -e .
 
-      - name: Install frontend deps
+      - name: Install frontend deps and build
         working-directory: frontend
-        run: npm install
+        run: |
+          npm install
+          npm run build
 
-      - name: Build frontend
-        working-directory: frontend
-        run: npm run build
-
-      - name: Start backend & dependencies
+      - name: Start services
         run: |
           docker-compose -f docker-compose.ci.yml up -d
-          sleep 20  # даем время подняться сервисам
+          sleep 20  # Wait for services to be ready
 
       - name: Install Playwright
         run: |
@@ -157,9 +159,10 @@ jobs:
 
       - name: Stop services
         if: always()
-        run: docker-compose -f docker-compose.ci.yml down
+        run: |
+          docker-compose -f docker-compose.ci.yml down
 
-  # 5. 🐳 Сборка и публикация Docker-образов
+  # 5. 🐳 Сборка и публикация Docker
   build-docker:
     needs: test-e2e
     runs-on: ubuntu-latest
@@ -172,7 +175,7 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Set up QEMU (multi-arch)
+      - name: Set up QEMU (multi-platform)
         uses: docker/setup-qemu-action@v3
 
       - name: Set up Docker Buildx
@@ -183,6 +186,10 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ${{ secrets.DOCKERHUB_USERNAME }}/polllive-backend
+          tags: |
+            type=ref,event=branch
+            type=ref,event=tag
+            type=sha
 
       - name: Build and push
         uses: docker/build-push-action@v5
@@ -226,7 +233,7 @@ jobs:
           name: polllive-desktop-builds
           path: desktop/build/
 
-  # 7. 🚀 Деплой: Kubernetes (Helm) или VPS (SSH)
+  # 7. 🚀 Деплой в production
   deploy:
     needs: [build-docker, build-electron]
     runs-on: ubuntu-latest
@@ -243,18 +250,20 @@ jobs:
 
       - name: Deploy to Kubernetes
         if: github.ref == 'refs/heads/main'
+        env:
+          KUBECONFIG: ./kubeconfig.yml
         run: |
-          echo "${{ secrets.KUBE_CONFIG }}" > kubeconfig.yml
-          export KUBECONFIG=./kubeconfig.yml
+          echo "${{ secrets.KUBE_CONFIG }}" > $KUBECONFIG
           helm upgrade --install polllive ./polllive-chart \
+            --set image.repository=${{ secrets.DOCKERHUB_USERNAME }}/polllive-backend \
             --set image.tag=${{ github.sha }} \
             --set replicaCount=3
 
-      - name: Upload release assets
-        uses: softprops/action-gh-release@v2
+      - name: Create GitHub Release
         if: github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v2
         with:
           files: |
-            releases/desktop/**.exe
-            releases/desktop/**.AppImage
+            releases/desktop/*.exe
+            releases/desktop/*.AppImage
           generate_release_notes: true

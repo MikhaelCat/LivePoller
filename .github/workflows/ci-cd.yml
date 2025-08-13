@@ -22,19 +22,28 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Install linters and stubs
+      - name: Install dependencies
         run: |
-            pip install ruff mypy
-            mypy --install-types --non-interactive
+          # Устанавливаем основные зависимости и stub-пакеты для mypy
+          pip install -r backend/requirements.txt
+          # Устанавливаем ruff и mypy
+          pip install ruff mypy
+          # Устанавливаем недостающие stub-пакеты (на случай, если забыли в requirements.txt)
+          # mypy --install-types --non-interactive
 
-      - name: Run linters
+      - name: Run linters (fix and check)
         run: |
-            ruff check backend/ --fix
-            ruff format backend/
-            ruff check backend/
-            ruff format backend/ --check
-            mypy backend/
+          # Исправляем базовые проблемы (I001, F401, W291 и т.д.)
+          ruff check backend/ --fix
+          ruff format backend/
 
+          # Финальная проверка - если упадет, значит, кто-то не запустил форматирование локально
+          ruff check backend/
+          ruff format backend/ --check
+          
+          # Проверка типов с mypy (убедитесь, что __init__.py созданы и папки переименованы)
+          mypy backend/
+          
   # 2. 🧪 Unit-тесты
   test-unit:
     needs: lint

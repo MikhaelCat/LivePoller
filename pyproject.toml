@@ -10,3 +10,21 @@ ignore = []
 indent-style = "space"
 line-ending = "lf"
 quote-style = "double"
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = false
+warn_unused_configs = true
+disallow_untyped_defs = true
+ignore_missing_imports = false
+
+[[tool.mypy.overrides]]
+module = [
+  "structlog.*",
+  "sentry_sdk.*",
+  "prometheus_client.*",
+  "elasticsearch.*",
+  "celery.*",
+  "backend.core.email"
+]
+ignore_missing_imports = true
